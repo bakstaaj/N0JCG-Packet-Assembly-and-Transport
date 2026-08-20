@@ -1,0 +1,101 @@
+--- a/pat/connect.go	2026-08-20 00:46:12.892938700 -0600
++++ b/pat/connect.go	2026-08-19 17:28:08.668254900 -0600
+@@ -232,6 +232,10 @@
+ 		log.Println("Prehook succeeded")
+ 	}
+ 
++	// The outgoing Pat connection is the FBB client: it receives the RMS
++	// gateway SID/challenge, sends the client handshake, and then owns the
++	// first mailbox turn (FF). The client-side RMS handshake handling is in
++	// wl2k-go/fbb; keep the FBB master flag false so handleOutbound sends FF.
+ 	err = exchange(conn, url.Target, false)
+ 	if err != nil {
+ 		log.Printf("Exchange failed: %s", err)
+--- a/pat/exchange.go	2026-08-20 00:46:13.504936900 -0600
++++ b/pat/exchange.go	2026-08-19 17:12:01.090525800 -0600
+@@ -143,7 +143,11 @@
+ 
+ 	// Handle secure login
+ 	session.SetSecureLoginHandleFunc(func(addr fbb.Address) (string, error) {
+-		if addr.Addr == fOptions.MyCall && config.SecureLoginPassword != "" {
++		// WES supplies one temporary config per logged-in mailbox. The RF
++		// identity bridge may rewrite the AX.25 source from the mailbox call
++		// to the configured packet SSID, so do not require the challenge
++		// address to equal Pat's transport identity here.
++		if config.SecureLoginPassword != "" {
+ 			return config.SecureLoginPassword, nil
+ 		}
+ 		for _, aux := range config.AuxAddrs {
+--- a/pat/go.mod	2026-08-20 00:46:13.767333300 -0600
++++ b/pat/go.mod	2026-08-19 16:00:17.386383900 -0600
+@@ -1,5 +1,9 @@
+ module github.com/la5nta/pat
+ 
++// Build the client-side Packet RMS variant against the local wl2k-go
++// handshake adjustment; other transports retain Pat's normal behavior.
++replace github.com/la5nta/wl2k-go => ../wl2k-go-local
++
+ go 1.19
+ 
+ require (
+--- a/wl2k-go-local/fbb/handshake.go	2026-08-20 00:46:27.515557700 -0600
++++ b/wl2k-go-local/fbb/handshake.go	2026-08-19 16:56:20.832467400 -0600
+@@ -28,17 +28,11 @@
+ }
+ 
+ func (s *Session) handshake(rw io.ReadWriter) error {
+-	if s.master {
+-		// Send MOTD lines
+-		for _, line := range s.motd {
+-			fmt.Fprintf(rw, "%s\r", line)
+-		}
+-
+-		if err := s.sendHandshake(rw, ""); err != nil {
+-			return err
+-		}
+-	}
+-
++	// AX.25 Packet RMS is gateway-led at the application layer even though
++	// the local session is the FBB master. Wait for the gateway SID, ;PQ
++	// challenge, and CMS prompt before sending the client handshake. Sending
++	// this greeting first makes BPQ enter its interactive Login path and
++	// prevents ;PR from being emitted.
+ 	hs, err := s.readHandshake()
+ 	if err != nil {
+ 		return err
+@@ -54,9 +48,13 @@
+ 
+ 	if !s.master {
+ 		return s.sendHandshake(rw, hs.SecureChallenge)
+-	} else {
+-		return nil
+ 	}
++
++	// In client-initiated mode, consume an RMS gateway's SID, secure
++	// challenge, and terminal prompt, then always send the complete standard
++	// FBB handshake, including ;FW, the Pat SID, and ;PR when challenged.
++	// Server-side listeners retain the upstream server-led behavior above.
++	return s.sendHandshake(rw, hs.SecureChallenge)
+ }
+ 
+ type handshakeData struct {
+--- a/wl2k-go-local/fbb/b2f.go	2026-08-20 00:46:27.415373500 -0600
++++ b/wl2k-go-local/fbb/b2f.go	2026-08-19 20:44:30.870043400 -0600
+@@ -196,6 +196,9 @@
+ 		if err != nil {
+ 			return
+ 		}
++		if strings.HasPrefix(line, "FC") || strings.HasPrefix(line, "F>") {
++			s.pLog.Printf("<%s len=%d", line[:2], len(line))
++		}
+ 
+ 		// Store pending message details (winlink extension)
+ 		if strings.HasPrefix(line, ";PM") {
+@@ -245,6 +248,7 @@
+ 			ourChecksum = (-ourChecksum) & 0xff
+ 			their, _ := strconv.ParseInt(line[3:], 16, 64)
+ 			if their != ourChecksum {
++				s.pLog.Printf("proposal checksum mismatch expected=%02X received=%02X", ourChecksum, their)
+ 				err = errors.New(fmt.Sprintf(`Checksum error (%d-%d)`, ourChecksum, their))
+ 				return
+ 			}

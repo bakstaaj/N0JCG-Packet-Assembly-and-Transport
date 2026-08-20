@@ -13,11 +13,15 @@ The corresponding source snapshots are included in:
 - `third_party/pat-v0.17.0/`
 - `third_party/wl2k-go-v0.12.1/`
 
-The standard Packet RMS client handshake is implemented in the upstream
-source. The N0JCG project packages that client for the WES appliance and
+The actual N0JCG source change is the reproducible patch:
+
+- `patches/0001-n0jcg-client-side-packet-rms.patch`
+
+It is generated from the WES build source and applies to the two upstream
+snapshots. It changes the client-side RMS handshake, dynamic secure-login
+identity handling, and RF mailbox-index diagnostics. The build script applies
+it automatically before compiling.
+
+The N0JCG project packages the patched client for the WES appliance and
 connects it to the appliance's runtime identity and mailbox/session boundary.
 No callsign, mailbox, gateway, or password is compiled into the client.
-
-The earlier binary-only package described this behavior as a downstream build
-change. The source-inclusive release corrects that wording and makes the
-upstream implementation available for independent review.

@@ -64,11 +64,12 @@ the build:
 
 - [`third_party/pat-v0.17.0`](third_party/pat-v0.17.0)
 - [`third_party/wl2k-go-v0.12.1`](third_party/wl2k-go-v0.12.1)
+- [`patches/0001-n0jcg-client-side-packet-rms.patch`](patches/0001-n0jcg-client-side-packet-rms.patch)
 
 Run [`scripts/build-arm64.sh`](scripts/build-arm64.sh) from Linux with Go 1.19
-or newer to build an ARM64 executable. `SOURCE_MANIFEST.md` records the
-upstream commit IDs and explains the boundary between upstream code and the
-N0JCG appliance packaging.
+or newer to apply the N0JCG patch and build an ARM64 executable.
+`SOURCE_MANIFEST.md` records the upstream commit IDs and explains the boundary
+between upstream code and the N0JCG appliance packaging.
 
 ## Relationship to upstream
 

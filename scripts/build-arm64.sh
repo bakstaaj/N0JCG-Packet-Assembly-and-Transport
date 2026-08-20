@@ -17,18 +17,19 @@ fi
 
 mkdir -p "$out_dir"
 
-# Build from a temporary copy so the tracked upstream go.mod is not edited.
+# Build from temporary copies so the tracked upstream sources are not edited.
 build_dir=$(mktemp -d)
 trap 'rm -rf "$build_dir"' EXIT
 mkdir -p "$build_dir/pat"
 (cd "$pat_dir" && tar --exclude=.git -cf - .) | (cd "$build_dir/pat" && tar -xf -)
-go mod edit -modfile="$build_dir/pat/go.mod" \
-  -replace="github.com/la5nta/wl2k-go=$wl2k_dir"
+mkdir -p "$build_dir/wl2k-go-local"
+(cd "$wl2k_dir" && tar --exclude=.git -cf - .) | (cd "$build_dir/wl2k-go-local" && tar -xf -)
+(cd "$build_dir" && patch -p1 < "$repo_root/patches/0001-n0jcg-client-side-packet-rms.patch")
 cd "$build_dir/pat"
 
 echo "Building Pat v0.17.0 for linux/arm64"
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
-  go build -modfile="$build_dir/pat/go.mod" -trimpath -o "$out_dir/pat" .
+  go build -trimpath -o "$out_dir/pat" .
 
 file "$out_dir/pat" || true
 sha256sum "$out_dir/pat"
