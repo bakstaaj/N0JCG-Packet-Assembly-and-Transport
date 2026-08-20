@@ -9,8 +9,8 @@ gateway.
 
 ## Scope
 
-This is a downstream client build, not an RMS gateway and not a replacement
-for the Winlink CMS or LinBPQ. It is designed to:
+This is a downstream package of the open-source client, not an RMS gateway and
+not a replacement for the Winlink CMS or LinBPQ. It is designed to:
 
 - establish a normal AX.25 Packet RMS client session;
 - process the RMS banner, challenge, and `CMS via ... >` handoff;
@@ -49,12 +49,26 @@ The binary must be run on Linux ARM64; it is not a Windows executable.
 
 ## Protocol behavior
 
-The client-side change is intentionally limited to the outgoing Packet RMS
-path. After AX.25 establishes the link, the client continues through the
-standard RMS/CMS handoff and emits the normal Winlink client sequence. Telnet
-and unrelated server-led transports retain the upstream behavior. See
+The published source shows that the outgoing Packet RMS path already follows
+the standard RMS/CMS client handoff in Pat v0.17.0 and wl2k-go v0.12.1. The
+N0JCG work packages that behavior for the WES appliance; it does not invent a
+gateway-specific protocol. Telnet and unrelated server-led transports retain
+the upstream behavior. See
 [`docs/client-side-rms.md`](docs/client-side-rms.md) and
 [`BUILD_NOTES.md`](BUILD_NOTES.md).
+
+## Source code
+
+The source-inclusive release contains the exact upstream snapshots used by
+the build:
+
+- [`third_party/pat-v0.17.0`](third_party/pat-v0.17.0)
+- [`third_party/wl2k-go-v0.12.1`](third_party/wl2k-go-v0.12.1)
+
+Run [`scripts/build-arm64.sh`](scripts/build-arm64.sh) from Linux with Go 1.19
+or newer to build an ARM64 executable. `SOURCE_MANIFEST.md` records the
+upstream commit IDs and explains the boundary between upstream code and the
+N0JCG appliance packaging.
 
 ## Relationship to upstream
 

@@ -3,7 +3,9 @@
 N0JCG Packet Assembly and Transport is a downstream build for the N0JCG
 Winlink Email Server appliance.
 
-This release is based on the official Pat v0.17.0 client and wl2k-go v0.12.1.
+This release includes source snapshots of the official Pat v0.17.0 client and
+wl2k-go v0.12.1 under `third_party/`. Their original MIT license files are
+included with each source tree.
 The names Pat, Winlink, and related marks belong to their respective owners.
 This repository is not an RMS gateway and is not operated by Winlink.
 

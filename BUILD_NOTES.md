@@ -10,7 +10,7 @@ Release: `v0.1.0`
 - Appliance use: Packet RMS client sessions from the N0JCG Winlink Email
   Server
 
-## Client-side change
+## Client-side behavior
 
 The outgoing Packet RMS exchange remains in the normal FBB client-turn mode:
 
@@ -18,7 +18,7 @@ The outgoing Packet RMS exchange remains in the normal FBB client-turn mode:
 exchange(conn, url.Target, false)
 ```
 
-The client-side handshake consumes the RMS SID/challenge and prompt, then
+The published upstream source consumes the RMS SID/challenge and prompt, then
 sends the complete standard client handshake after the prompt:
 
 ```text
@@ -46,5 +46,8 @@ The released executable is the ARM64 binary already validated in the N0JCG
 Winlink Email Server appliance package. Its SHA-256 digest is recorded in
 `SHA256SUMS` inside the release archive and in the GitHub release assets.
 
-This repository intentionally documents the downstream behavior and publishes
-the deployable artifact. It does not claim to be the upstream Pat project.
+The source-inclusive v0.1.1 release adds the exact upstream source snapshots,
+their licenses, and a build script. No unverified N0JCG protocol diff is
+claimed: the client-side handshake behavior is present in the upstream source
+versions listed above. N0JCG-specific work is the appliance integration,
+runtime identity handling, packaging, and deployment boundary.
